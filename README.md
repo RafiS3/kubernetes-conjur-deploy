@@ -326,3 +326,21 @@ access the Conjur UI.
 The [kubernetes-conjur-demo repo](https://github.com/conjurdemos/kubernetes-conjur-demo)
 deploys test applications that retrieve secrets from Conjur and serves as a
 useful reference when setting up your own applications to integrate with Conjur.
+
+# Auto Enrolled Follower
+
+1. Created a follower seed file on the Conjur master. On the master Conjur machine container, run:
+
+    `evoke seed follower <conjur-follower-service-name> <master load balancer public DNS> > follower-seed.tar`
+
+2. Copy the seed file to your local machine.
+3. Create a secret from the follower seed file:
+
+    `oc create secret generic conjur-follower-seed-secret --from-file=/path/to/follower-seed.tar --namespace=<conjur namespace>`
+
+4. Modify the `conjur-follower-auto-enrolled.yaml` with your:
+* Seed secret name
+* Follower deployment config name
+* Follower service name
+
+5. Create the Conjur follower deployment by running: `oc create -f openshift/conjur-follower-auto-enrolled.yaml`
