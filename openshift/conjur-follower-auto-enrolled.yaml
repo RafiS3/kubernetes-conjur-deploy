@@ -1,0 +1,66 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: conjur-follower-auto-enrolled
+  labels:
+    app: conjur-follower-auto-enrolled
+spec:
+  ports:
+  - port: 443
+    name: https
+#    nodePort: 30111
+  - port: 636
+    name: ldaps
+  selector:
+    app: conjur-follower-auto-enrolled
+  type: LoadBalancer
+---
+apiVersion: v1
+kind: DeploymentConfig
+metadata:
+  name: conjur-follower-auto-enrolled
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: conjur-follower-auto-enrolled
+        name: conjur-follower-auto-enrolled
+        role: follower
+    spec:
+      serviceAccountName: conjur-cluster
+      containers:
+      - name: conjur-appliance
+        image: openshift-39.itci.conjur.net/rafi-conjur-follower/conjur-appliance:rafi-conjur-follower
+        command: ["/bin/sh"]
+        args: ["-c", "bash -c 'sleep 15; evoke unpack seed /etc/seed-volume/follower-seed.tar; sleep 5; evoke configure follower' & /bin/keyctl session - /sbin/my_init" ]
+        # command: [ "/bin/sh", "-c", "evoke configure follower"]
+        imagePullPolicy: Always
+        env:
+          - name: CONJUR_AUTHENTICATORS
+            value: authn-k8s/prod
+        ports:
+        - containerPort: 443
+          name: https
+        - containerPort: 636
+          name: ldaps
+        - containerPort: 5432
+          name: pg-main
+        - containerPort: 5433
+          name: pg-audit
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 443
+            scheme: HTTPS
+          initialDelaySeconds: 15
+          timeoutSeconds: 
+        volumeMounts:
+        - name: seed-volume
+          mountPath: /etc/seed-volume
+          readOnly: false
+      volumes:
+      - name: seed-volume
+        secret:
+          secretName: conjur-follower-auto-enroll-seed
