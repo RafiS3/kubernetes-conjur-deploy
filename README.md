@@ -329,7 +329,7 @@ useful reference when setting up your own applications to integrate with Conjur.
 
 # Auto Enrolled Follower
 
-1. Created a follower seed file on the Conjur master. On the master Conjur machine container, run:
+1. Create a follower seed file on the Conjur master. Run:
 
     `evoke seed follower <conjur-follower-service-name> <master load balancer public DNS> > follower-seed.tar`
 
@@ -339,7 +339,7 @@ useful reference when setting up your own applications to integrate with Conjur.
     `oc create secret generic conjur-follower-seed-secret --from-file=/path/to/follower-seed.tar --namespace=<conjur namespace>`
 
 4. Modify the `conjur-follower-auto-enrolled.yaml` with your:
-* Seed secret name
+* Seed file secret name
 * Follower deployment config name
 * Follower service name
 
