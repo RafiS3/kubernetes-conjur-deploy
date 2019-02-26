@@ -343,4 +343,17 @@ useful reference when setting up your own applications to integrate with Conjur.
 * Follower deployment config name
 * Follower service name
 
-5. Create the Conjur follower deployment by running: `oc create -f openshift/conjur-follower-auto-enrolled.yaml`
+5. Create an image pull secret from the the Conjur service account token:
+* Get the Conjur service account token name: `sa_token=$(oc describe sa conjur-cluster | grep -i tokens | awk '{print $2}')`
+* Get the token secret: `sa_token_secret=$(oc describe secret $sa_token | grep -i token: | awk '{print $2}')`
+* Save the secret as the deployment image pull secret:
+```
+    oc create secret docker-registry dockerpullsecret \
+    --docker-server=${DOCKER_REGISTRY_PATH} \
+    --docker-username=_ \
+    --docker-password=$sa_token_secret \
+    --docker-email=_
+
+    oc secrets link serviceaccount/conjur-cluster secrets/dockerpullsecret --for=pull
+```
+6. Create the Conjur follower deployment by running: `oc create -f openshift/conjur-follower-auto-enrolled.yaml`
